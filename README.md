@@ -1,632 +1,379 @@
-# AllayAscend 1.5.0
-## Cẩm nang toàn tập — Lối chơi · Cơ chế · Chiến lược · Quản trị
+# AllayAscend 1.0.0
 
-> **Plugin RPG progression** dành cho server Paper/Purpur **1.20.6+**, gắn kinh tế **Điểm** qua soft-hook **AllayScore**.  
-> Thiết kế retention hardcore: **đường & node sống sót sau chết**; Điểm, streak, heat, risk **đốt khi chết**.  
-> Bản quyền: MIT · AllayMC © 2026
+Plugin RPG gắn **AllayScore (Điểm)** cho Paper 1.20+.
 
----
+- **Path + node** sống sót qua chết (identity dài hạn)
+- **Điểm / streak / risk / ordeal entry** mất khi chết hoặc fail
+- Soft-depend: **AllayScore**
 
-## Mục lục
-
-1. [Triết lý thiết kế](#1-triết-lý-thiết-kế)
-2. [Cài đặt & phụ thuộc](#2-cài-đặt--phụ-thuộc)
-3. [Bắt đầu trong 5 phút](#3-bắt-đầu-trong-5-phút)
-4. [Hệ Điểm & chết](#4-hệ-điểm--chết)
-5. [Bốn con đường (Path)](#5-bốn-con-đường-path)
-6. [Cây 12 node — full table](#6-cây-12-node--full-table)
-7. [Hợp đồng ngày / tuần](#7-hợp-đồng-ngày--tuần)
-8. [Huyết ước (Blood Risk)](#8-huyết-ước-blood-risk)
-9. [Thử thách chết người (Ordeal)](#9-thử-thách-chết-người-ordeal)
-10. [Truy nã (Bounty) & chống farm](#10-truy-nã-bounty--chống-farm)
-11. [Kỹ năng chủ động](#11-kỹ-năng-chủ-động)
-12. [Nhiệt (Heat) · Prestige · Season](#12-nhiệt-heat--prestige--season)
-13. [Lớp RPG sâu (1.5.0)](#13-lớp-rpg-sâu-150)
-14. [GUI · Lệnh · Quyền](#14-gui--lệnh--quyền)
-15. [Echo & vòng lặp “muốn chơi tiếp”](#15-echo--vòng-lặp-muốn-chơi-tiếp)
-16. [Chiến lược chơi tối ưu](#16-chiến-lược-chơi-tối-ưu)
-17. [Cân bằng kinh tế & chống lạm phát](#17-cân-bằng-kinh-tế--chống-lạm-phát)
-18. [Hiệu năng (TPS)](#18-hiệu-năng-tps)
-19. [Cấu hình đầy đủ](#19-cấu-hình-đầy-đủ)
-20. [Admin toolkit](#20-admin-toolkit)
-21. [FAQ · Troubleshooting](#21-faq--troubleshooting)
-22. [Changelog ý tưởng 1.5.0](#22-changelog-ý-tưởng-150)
-
----
-
-## 1. Triết lý thiết kế
-
-AllayAscend **không** thay thế PvP gear hay rank AllayScore. Nó là **lớp danh tính dài hạn**:
-
-| Trục | Mất khi chết? | Ý nghĩa |
-|------|----------------|---------|
-| Path + unlocked nodes | **Không** | “Tôi là ai trên server” |
-| Điểm AllayScore | **Có** (do AllayScore) | Power curve chính, rủi ro thật |
-| Contract streak | **Có** | Phạt AFK / death-careless |
-| Heat | **Có** | Bonus risk tạm thời |
-| Blood Risk stake | **Có** | High-roll, high-pain |
-| Season points | **Thuế %** khi chết | Soft progress mùa |
-| Prestige | **Không** | Đầu tư dài |
-| Mastery / Title / Relics / Discoveries | **Không** | Chiều sâu sưu tầm |
-
-**Mục tiêu cảm xúc:** mỗi session có mục tiêu rõ (contract / node / bounty / ordeal), mỗi cái chết **đau nhưng không xóa identity**, mỗi chiến thắng **đẩy bạn tới bước kế tiếp** (Echo).
-
----
-
-## 2. Cài đặt & phụ thuộc
-
-### Yêu cầu
-- Paper / Purpur **1.20.6+** (API potion/attribute hiện đại)
-- Java **21**
-- Plugin **AllayScore** (softdepend — bắt buộc để trừ/cộng Điểm)
-
-### Cài
-1. Build: `mvn clean package`
-2. Copy JAR vào `plugins/`
-3. Đảm bảo AllayScore đã bật trước hoặc cùng lúc
-4. Restart / `/aa reload`
-5. Lần đầu plugin tạo `config.yml`, `messages.yml`, `progress.yml`
-
-### Kiểm tra hook
-Log khi enable thành công:
-```text
-AllayScore hooked — Điểm economy live.
-AllayAscend 1.5.0 enabled — paths / contracts / risk / ordeal / bounty / skills / rpg-depth.
+```bash
+mvn -q clean package
+# jar: target/AllayAscend.jar
 ```
-Nếu thấy *offline Điểm stub (0)* → AllayScore chưa hook; mọi spend sẽ fail.
 
 ---
 
-## 3. Bắt đầu trong 5 phút
+## Mục lục wiki
 
-1. Vào game → gõ **`/ascend`** (hoặc `/asc`, `/thienmenh`)
-2. Mở **Hướng dẫn** trong GUI (icon sách) — đọc 7 bước
-3. **Con đường** → chọn 1 trong 4 (Kiếm / Pháp / Thám / Thủ)
-4. Chơi bình thường: đào, giết, đi bộ, câu → **Hợp đồng** tự đếm
-5. Khi đủ điều kiện → **Claim** (GUI hoặc `/ascend claim`) — **không tự trả thưởng**
-6. Dùng Điểm mở **node** trên cây
-7. Khi máu dày và tự tin: **Huyết ước**, **Truy nã**, **Thử thách**
-
-> **Luật vàng:** chưa chọn path thì hầu hết contract **không đếm** (`contracts-rules.require-path: true`).
-
----
-
-## 4. Hệ Điểm & chết
-
-### Điểm đến từ đâu?
-| Nguồn | Ghi chú |
-|-------|---------|
-| Login bonus | Base 25 + streak ×5 (max 30 ngày) |
-| Claim hợp đồng | Có streak %, path bonus %, prestige %, risk mult |
-| Bounty / Ordeal thắng | Có trần & decay |
-| Combo / Discovery / Mastery | Nhỏ hoặc one-shot |
-| Milestone season | Ngưỡng 150 → 2500 |
-
-### Khi chết xảy ra gì?
-1. **AllayScore** reset Điểm (message nhắc)
-2. **Streak** hợp đồng về 0
-3. **Heat** về 0
-4. **Risk** đang active: mất stake (đã trừ sẵn)
-5. **Season tax** ~30% điểm mùa
-6. **Node / path / prestige / mastery / relics** giữ nguyên
-7. Trong **Ordeal**: keep inventory + XP (vẫn fail ordeal)
-8. Bị **truy nã** và bị đúng hunter giết: keep inventory + XP
+1. [Cài đặt](#cài-đặt)
+2. [Cách chơi nhanh](#cách-chơi-nhanh)
+3. [Hệ thống Điểm & chết](#hệ-thống-điểm--chết)
+4. [9 Con đường (Path)](#9-con-đường-path)
+5. [Cây kỹ năng (36 node)](#cây-kỹ-năng-36-node)
+6. [Hợp đồng & Claim](#hợp-đồng--claim)
+7. [Blood Contract (Risk)](#blood-contract-risk)
+8. [Ordeal](#ordeal)
+9. [Boss Event](#boss-event)
+10. [Truy nã (Bounty)](#truy-nã-bounty)
+11. [Mảnh Nâng Level & Bảo hiểm](#mảnh-nâng-level--bảo-hiểm)
+12. [Mùa giải (Season)](#mùa-giải-season)
+13. [Lệnh](#lệnh)
+14. [Config quan trọng](#config-quan-trọng)
 
 ---
 
-## 5. Bốn con đường (Path)
+## Cài đặt
 
-Chọn **một lần**. Đổi đường tốn **120 000 Điểm** và **xóa toàn bộ node** đã mở (soft-reset).
+1. Cài **AllayScore** trước (economy Điểm).
+2. Thả `AllayAscend.jar` vào `plugins/`.
+3. Restart server.
+4. (Tuỳ chọn) AllayShop cho `/shop`.
 
-| ID lệnh | Tên | Màu | Phong cách |
-|---------|-----|-----|-------------|
-| `kiem` | Kiếm sĩ | Đỏ | Cận chiến, sát thương, máu chiến |
-| `phap` | Pháp sư | Tím | Di chuyển, sinh tồn, tàng hình chu kỳ |
-| `tham` | Thám hiểm | Xanh biển | Tốc độ, haste, đào, nhảy |
-| `thu` | Thủ hộ | Xanh lá | Resistance, regen, chống chết |
-
-### Kỹ năng chủ động (cần ≥ 3 node)
-
-| Path | Tên | Hiệu ứng | CD mặc định |
-|------|-----|----------|--------------|
-| Kiếm | **Cuồng nộ** | Strength II + Speed I (~6s) | 120s |
-| Pháp | **Dịch chuyển** | Teleport theo hướng nhìn + slow falling | 100s |
-| Thám | **Xung kích** | Dash + Speed II ngắn | 80s |
-| Thủ | **Củng cố** | Resistance II + Absorption (~5s) | 130s |
-
-Lệnh: `/ascend skill` hoặc click trong GUI.
+Java **21**, Paper **1.20.x**.
 
 ---
 
-## 6. Cây 12 node — full table
+## Cách chơi nhanh
 
-Chi phí là **Điểm**. Buff **passive** pulse định kỳ, **không mất khi chết**.  
-Node `p6` (Pháp): **tàng hình 4s mỗi 45s** — không invis vĩnh viễn.
+```
+1. Farm XP → có Điểm (AllayScore)
+2. /ascend → chọn 1 Path
+3. Mở node trên cây (GUI 3 trang)
+4. Làm hợp đồng → /ascend claim khi xong
+5. (Muộn) Risk / Ordeal / Boss / Bounty
+```
 
-### Kiếm sĩ (`k1`→`k12`)
-
-| ID | Tên | Buff chính | Giá (Điểm) |
-|----|-----|------------|------------|
-| k1 | Thế Đứng | Speed I | 5 000 |
-| k2 | Nhát Chém | Strength I | 15 000 |
-| k3 | Máu Lạnh | Resistance I | 35 000 |
-| k4 | Bước Chiến | Speed + Strength | 70 000 |
-| k5 | Cuồng Chiến | Strength + Speed | 120 000 |
-| k6 | Huyết Chiến | Regeneration I | 200 000 |
-| k7 | Thiết Giáp | Res + Fire Res | 320 000 |
-| k8 | Hung Nộ | Strength + Regen | 480 000 |
-| k9 | Tử Chiến | Strength II | 700 000 |
-| k10 | Bất Diệt | Res + Regen + Speed | 950 000 |
-| k11 | Chiến Thần | Strength II + Speed | 1 300 000 |
-| k12 | Vô Địch | Regen + Strength II + Res | 1 800 000 |
-
-### Pháp sư (`p1`→`p12`)
-
-| ID | Tên | Buff chính | Giá |
-|----|-----|------------|-----|
-| p1 | Minh Nhãn | Night Vision | 5 000 |
-| p2 | Bước Ảo | Speed I | 15 000 |
-| p3 | Lá Chắn | Resistance I | 35 000 |
-| p4 | Hỏa Giáp | Fire Resistance | 70 000 |
-| p5 | Thủy Tức | Water Breathing + NV | 120 000 |
-| p6 | Không Ảnh | Invis chu kỳ 4s/45s | 200 000 |
-| p7 | Thần Tốc | Speed II | 320 000 |
-| p8 | Pháp Giáp | Res + Fire | 480 000 |
-| p9 | Thần Trí | Speed II + NV | 700 000 |
-| p10 | Ảo Ảnh | Speed (+ vẫn có p6 cycle) | 950 000 |
-| p11 | Pháp Vực | Res + Fire + Water + NV | 1 300 000 |
-| p12 | Chân Pháp | Speed II + Res + Fire + NV | 1 800 000 |
-
-### Thám hiểm (`t1`→`t12`)
-
-| ID | Tên | Buff chính | Giá |
-|----|-----|------------|-----|
-| t1 | Bước Nhẹ | Speed I | 5 000 |
-| t2 | Nhảy Xa | Jump Boost I | 15 000 |
-| t3 | Thị Lực | Night Vision | 35 000 |
-| t4 | Thợ Mỏ | Haste I | 70 000 |
-| t5 | Lữ Khách | Speed + Jump + NV | 120 000 |
-| t6 | Thợ Săn Quặng | Haste + Speed | 200 000 |
-| t7 | Bóng Đêm | NV + Speed II | 320 000 |
-| t8 | Đào Sâu | Haste II | 480 000 |
-| t9 | Xuyên Địa | Haste II + Speed | 700 000 |
-| t10 | Lữ Hành Gia | Speed II + Jump + NV | 950 000 |
-| t11 | Chinh Phục | Haste II + Jump + NV | 1 300 000 |
-| t12 | Kẻ Lang Thang | Haste II + Speed II + NV | 1 800 000 |
-
-### Thủ hộ (`h1`→`h12`)
-
-| ID | Tên | Buff chính | Giá |
-|----|-----|------------|-----|
-| h1 | Khiên Gỗ | Resistance I | 5 000 |
-| h2 | Hồi Phục | Regeneration I | 15 000 |
-| h3 | Bền Bỉ | Res + Speed | 35 000 |
-| h4 | Lửa Không Chạm | Fire Resistance | 70 000 |
-| h5 | Thủ Thành | Res + Regen | 120 000 |
-| h6 | Giáp Sắt | Resistance II | 200 000 |
-| h7 | Bất Khuất | Res + Regen + Fire | 320 000 |
-| h8 | Thành Trì | Res II + Speed | 480 000 |
-| h9 | Thủ Hộ | Res II + Regen | 700 000 |
-| h10 | Bất Tử | Res II + Regen + Fire | 950 000 |
-| h11 | Thủ Hộ Tối Thượng | Res II + Regen + Speed | 1 300 000 |
-| h12 | Khiên Vĩnh Cửu | Res II + Regen + Fire + Speed | 1 800 000 |
-
-**Tổng ~1 đường:** khoảng **6M+ Điểm** (curve dài nhiều tuần chơi đều).
-
-Mở khóa: GUI cây kỹ năng hoặc `/ascend unlock <id>`.
+**3 câu nhớ:**
+1. `/ascend` = menu chính
+2. Hợp đồng xong phải **claim** mới có Điểm thưởng
+3. Chết mất **Điểm**, **không mất** node đã mở
 
 ---
 
-## 7. Hợp đồng ngày / tuần
+## Hệ thống Điểm & chết
 
-### Nguyên tắc quan trọng
-- Tiến độ **tự đếm** khi đào / giết / đi / câu (và craft nếu config)
-- Thưởng **chỉ khi CLAIM** (GUI hoặc lệnh) → chống AFK auto-payout / dupe
-- Cần **đã chọn path**
-- Creative / Spectator **không đếm**
-- Walk: **không** bay, glide, vehicle; có thể chặn bơi; cần on-ground
-- Rate-limit action (chống macro spam)
+| Mất khi chết | Giữ khi chết |
+|--------------|--------------|
+| Điểm AllayScore + Rank | Path + node đã mở |
+| Streak hợp đồng | Prestige |
+| Tiền cược Risk | — |
+| Phí Ordeal (nếu đang chơi) | — |
+| Heat | — |
 
-### Streak
-- Claim daily liên tiếp ngày → streak +1
-- **+4% thưởng / ngày streak**, trần **+40%**
-- **Chết = đứt streak**
-
-### Bonus khác trên claim
-- Path `contract-bonus-percent` (cộng dồn node)
-- Prestige: **+2% / level**
-- Risk multiplier nếu đang Blood Contract
-- Hard cap 1 claim: **1200 Điểm** (config)
-
-### Bộ hợp đồng mặc định (rút gọn)
-
-**Ngày**
-
-| ID | Tên | Loại | Mục tiêu lượng | Thưởng base |
-|----|-----|------|----------------|-------------|
-| d_mine | Thợ mỏ | BREAK | 450 block đá/quặng | 42 |
-| d_kill | Săn quái | KILL | 90 mob thường | 48 |
-| d_travel | Lữ hành | WALK | 16 000 bước | 38 |
-| d_fish | Câu cá | FISH | 35 | 45 |
-| d_craft | Thợ thủ công | CRAFT | 40 | 40 |
-
-**Tuần**
-
-| ID | Tên | Loại | Lượng | Thưởng |
-|----|-----|------|-------|--------|
-| w_boss | Săn boss | KILL elite | 28 | 280 |
-| w_ore | Khoáng hiếm | BREAK diamond/debris… | 48 | 300 |
-| w_travel | Xuyên lục địa | WALK | 80 000 | 260 |
-
-Reset daily/weekly theo lịch local server; progress incomplete bị clear khi sang ngày/tuần mới sau claim marker.
+Bảo hiểm chết (`/ascend insurance`): đổi 1 **Mảnh Nâng Level** → chết **giữ đồ**, chỉ mất **70% Điểm**.
 
 ---
 
-## 8. Huyết ước (Blood Risk)
+## 9 Con đường (Path)
 
-**Ý tưởng:** cược Điểm → hoàn thành **1 hợp đồng (claim)** trong thời gian → nhận thưởng claim **nhân hệ số** + **hoàn stake**.
+Chọn **1** path. Đổi path sau tốn `path-change-cost` (config) và **reset node**.
 
-| Tham số | Mặc định |
-|---------|----------|
-| Min / Max stake | 800 / 4000 |
-| Hệ số | ×1.30 (+ heat bonus nhỏ + prestige) |
-| Thời hạn | 480 giây |
-| Thua | Chết hoặc hết giờ → **mất stake** (đã trừ lúc vào) |
+| ID lệnh | Tên | Phong cách | Skill chủ động (`/ascend skill`) |
+|---------|-----|------------|----------------------------------|
+| `kiem` | **Kiếm sĩ** | Cận chiến, sát thương & sức bền | Cuồng nộ — Strength + Speed ngắn |
+| `phap` | **Pháp sư** | Di chuyển, hiệu ứng & sinh tồn | Dịch chuyển — blink + slow falling |
+| `tham` | **Thám hiểm** | Tốc độ, đào quặng & cơ động | Xung kích — dash + Speed |
+| `thu` | **Thủ hộ** | Phòng thủ, hồi phục & chống chết | Củng cố — Resistance + Absorption |
+| `cung` | **Cung thủ** | Tầm xa, tốc độ kéo & cơ động | Mưa tên — Speed + Jump |
+| `linh` | **Linh hồn** | Hấp thụ, Night Vision & kháng hiệu ứng | Lớp hồn — Invis ngắn + Resistance |
+| `cong` | **Công binh** | Đào, craft, Haste & tiện ích | Xung công — Haste + Speed |
+| `doc` | **Độc sư** | Poison, kiểm soát & bền bỉ | Nọc độc — Speed + Resistance |
+| `hoa` | **Hỏa thần** | Lửa, sức mạnh bùng nổ & áp lực | Bùng cháy — Strength + Fire Resistance |
 
-Cách chơi an toàn: chỉ risk khi contract gần xong và bạn ở vùng an toàn / có kế hoạch claim ngay.
-
----
-
-## 9. Thử thách chết người (Ordeal)
-
-Trả **phí vào cửa** → sống sót hết thời gian → thưởng (có trần).  
-**Chết = mất phí**. Trong ordeal: **keep đồ**, nhưng **cấm** táo vàng / potion / sữa; buff tank (regen, resistance, absorption, strength, fire res…) **bị gỡ định kỳ**.
-
-| Loại | Phí | Thời gian | Thưởng (min–max) |
-|------|-----|-----------|------------------|
-| Sóng xương | 1200 | 55s | 160–280 |
-| Giáng lôi | 1400 | 40s | 180–310 |
-| Hơi wither | 1600 | 32s | 200–340 |
-| Hút vực | 1800 | 40s | 220–360 |
-| Mưa lửa | 1500 | 45s | 190–320 |
-| Sương độc | 1300 | 36s | 170–300 |
-| Hút hồn | 2000 | 48s | 240–400 |
-
-- Trần thưởng ordeal: **420**
-- Cooldown giữa các lần: **300s**
-- Cần AllayScore hook; GUI hiện phí / điểm hiện có
-
-**Không phải máy in Điểm** — EV thường âm nếu chơi ẩu; dùng để heat, season, thrill.
+Skill cần **≥ 3 node** đã mở. Có cooldown theo config `skills.*`.
 
 ---
 
-## 10. Truy nã (Bounty) & chống farm
+## Cây kỹ năng (36 node)
 
-### Ba loại (ngẫu nhiên khi nhận)
+- Mỗi path ~**36 node** (GUI **3 trang × 12**).
+- Giá tăng dần: tầng 1 ≈ **4.500** Điểm → tầng cao tới hàng triệu.
+- Buff passive **nhẹ** (Speed / NV / Haste / Strength / Resistance / Regen / FireRes) — không stack máu bẩn.
+- **Nhánh A/B** tại mốc **12** và **24** (chỉ chọn 1).
+- Node sau nhánh cần **một trong hai** nhánh (OR).
 
-1. **Săn tinh anh** — giết Enderman / Wither Skeleton / Piglin Brute / Ravager / Vindicator (mặc định 6 kill). Mob phải sống ≥ 40 ticks.
-2. **Đào sâu** — Deepslate / Diamond Ore / Ancient Debris (mặc định 60 block).
-3. **Truy nã người** — 1 player online **đích danh**:
-   - Nạn nhân được báo đang bị truy nã
-   - Bị **đúng hunter** giết → **không mất đồ & XP**
-   - Hunter hoàn thành → thưởng
+### Bảng giá tham khảo (công thức `4500 × 1.28^(n-1)`)
 
-### Chống clone treo / farm (1.5.0)
+| Tầng | Giá (Điểm) |
+|------|------------|
+| T1 | 4,500 |
+| T2 | 5,800 |
+| T3 | 7,400 |
+| T5 | 12,100 |
+| T8 | 25,300 |
+| T12 | 68,000 |
+| T18 | 299,100 |
+| T24 | 1,315,400 |
+| T30 | 5,785,000 |
+| T36 | 8,000,000 |
 
-| Cơ chế | Mô tả |
-|--------|--------|
-| Anti-AFK | Mục tiêu phải có activity (di chuyển) trong **45s** |
-| Online tối thiểu | Acc vào server &lt; **120s** không làm mục tiêu |
-| Combat tối thiểu | Phải damage trước **≥ 3s** mới tính kết liễu |
-| Pair cooldown | Cùng cặp người: **3600s** không săn lại |
-| Max / ngày | **5** truy nã hoàn thành |
-| Decay thưởng | Mỗi lần trong ngày giảm ~**14%** |
-| Trần điểm / ngày | **1600** Điểm từ bounty |
-| Cooldown nhận | **240s** sau win; fail **150s** |
-| Creative | Không đếm |
+### Chi tiết từng Path
 
-Phí vào mặc định: **500 Điểm**. Thời hạn: **900s**. Hết giờ = mất phí.
+#### Kiếm sĩ (`/ascend path kiem`)
 
-Permission miễn săn: `allayascend.bounty.immune`.
+- **Ý tưởng:** Cận chiến, sát thương & sức bền
+- **Chu kỳ buff:** `SPEED → STRENGTH → RESISTANCE → REGENERATION → FIRE_RESISTANCE` (xoay theo tầng)
+- **Skill:** Cuồng nộ — Strength + Speed ngắn
+- **Prefix node id:** `k1` … `k36`, nhánh `k12a`/`k12b`, `k24a`/`k24b`
+
+| Trang GUI | Node (tên gốc lặp theo chu kỳ 12) |
+|-----------|----------------------------------|
+| 1 (T1–12) | Thế Đứng, Nhát Chém, Máu Lạnh, Bước Chiến, Cuồng Chiến, Huyết Chiến, Thiết Giáp, Huyết Nộ, Chí Tôn, Bá Vương, Vô Song, Master Kiếm |
+| 2 (T13–24) | Cùng bộ tên + hậu tố · 2 |
+| 3 (T25–36) | Cùng bộ tên + hậu tố · 3 |
+
+#### Pháp sư (`/ascend path phap`)
+
+- **Ý tưởng:** Di chuyển, hiệu ứng & sinh tồn
+- **Chu kỳ buff:** `NIGHT_VISION → SPEED → RESISTANCE → FIRE_RESISTANCE → REGENERATION` (xoay theo tầng)
+- **Skill:** Dịch chuyển — blink + slow falling
+- **Prefix node id:** `p1` … `p36`, nhánh `p12a`/`p12b`, `p24a`/`p24b`
+
+| Trang GUI | Node (tên gốc lặp theo chu kỳ 12) |
+|-----------|----------------------------------|
+| 1 (T1–12) | Khởi Linh, Dịch Tầng, Lớp Khiên, Tàng Ảnh, Hồi Lực, Pháp Trận, Hộ Thể, Không Ảnh, Đại Pháp, Chân Sư, Pháp Thần, Master Pháp |
+| 2 (T13–24) | Cùng bộ tên + hậu tố · 2 |
+| 3 (T25–36) | Cùng bộ tên + hậu tố · 3 |
+
+#### Thám hiểm (`/ascend path tham`)
+
+- **Ý tưởng:** Tốc độ, đào quặng & cơ động
+- **Chu kỳ buff:** `SPEED → JUMP_BOOST → FAST_DIGGING → NIGHT_VISION → RESISTANCE` (xoay theo tầng)
+- **Skill:** Xung kích — dash + Speed
+- **Prefix node id:** `t1` … `t36`, nhánh `t12a`/`t12b`, `t24a`/`t24b`
+
+| Trang GUI | Node (tên gốc lặp theo chu kỳ 12) |
+|-----------|----------------------------------|
+| 1 (T1–12) | Lữ Khách, Bước Nhảy, Tay Đào, Đêm Rừng, Xuyên Sơn, Tốc Hành, Thám Sâu, Địa Đạo, Chinh Phục, Thiên Lý, Vô Tận, Master Thám |
+| 2 (T13–24) | Cùng bộ tên + hậu tố · 2 |
+| 3 (T25–36) | Cùng bộ tên + hậu tố · 3 |
+
+#### Thủ hộ (`/ascend path thu`)
+
+- **Ý tưởng:** Phòng thủ, hồi phục & chống chết
+- **Chu kỳ buff:** `RESISTANCE → REGENERATION → FIRE_RESISTANCE → SPEED → RESISTANCE` (xoay theo tầng)
+- **Skill:** Củng cố — Resistance + Absorption
+- **Prefix node id:** `h1` … `h36`, nhánh `h12a`/`h12b`, `h24a`/`h24b`
+
+| Trang GUI | Node (tên gốc lặp theo chu kỳ 12) |
+|-----------|----------------------------------|
+| 1 (T1–12) | Thế Thủ, Lớp Da, Hồi Phục, Chống Cháy, Khiên Sống, Bất Khuất, Thành Lũy, Huyết Thủ, Bất Diệt, Thủ Thần, Vách Sắt, Master Thủ |
+| 2 (T13–24) | Cùng bộ tên + hậu tố · 2 |
+| 3 (T25–36) | Cùng bộ tên + hậu tố · 3 |
+
+#### Cung thủ (`/ascend path cung`)
+
+- **Ý tưởng:** Tầm xa, tốc độ kéo & cơ động
+- **Chu kỳ buff:** `SPEED → NIGHT_VISION → JUMP_BOOST → STRENGTH → RESISTANCE` (xoay theo tầng)
+- **Skill:** Mưa tên — Speed + Jump
+- **Prefix node id:** `c1` … `c36`, nhánh `c12a`/`c12b`, `c24a`/`c24b`
+
+| Trang GUI | Node (tên gốc lặp theo chu kỳ 12) |
+|-----------|----------------------------------|
+| 1 (T1–12) | Tư Thế, Mắt Diều, Bước Nhảy, Tên Nhanh, Sát Thủ, Kình Xạ, Tinh Mắt, Cung Thánh, Thần Xạ, Siêu Việt, Chí Tôn Cung, Master Cung |
+| 2 (T13–24) | Cùng bộ tên + hậu tố · 2 |
+| 3 (T25–36) | Cùng bộ tên + hậu tố · 3 |
+
+#### Linh hồn (`/ascend path linh`)
+
+- **Ý tưởng:** Hấp thụ, Night Vision & kháng hiệu ứng
+- **Chu kỳ buff:** `NIGHT_VISION → RESISTANCE → REGENERATION → SPEED → FIRE_RESISTANCE` (xoay theo tầng)
+- **Skill:** Lớp hồn — Invis ngắn + Resistance
+- **Prefix node id:** `l1` … `l36`, nhánh `l12a`/`l12b`, `l24a`/`l24b`
+
+| Trang GUI | Node (tên gốc lặp theo chu kỳ 12) |
+|-----------|----------------------------------|
+| 1 (T1–12) | Khởi Linh, Lớp Hồn, Hấp Thụ, Bóng Đêm, Huyết Ảnh, Linh Giáp, Hồn Bất Diệt, Dạ Hành, Linh Vực, Thần Hồn, Vô Ảnh, Master Linh |
+| 2 (T13–24) | Cùng bộ tên + hậu tố · 2 |
+| 3 (T25–36) | Cùng bộ tên + hậu tố · 3 |
+
+#### Công binh (`/ascend path cong`)
+
+- **Ý tưởng:** Đào, craft, Haste & tiện ích
+- **Chu kỳ buff:** `FAST_DIGGING → SPEED → NIGHT_VISION → RESISTANCE → FIRE_RESISTANCE` (xoay theo tầng)
+- **Skill:** Xung công — Haste + Speed
+- **Prefix node id:** `g1` … `g36`, nhánh `g12a`/`g12b`, `g24a`/`g24b`
+
+| Trang GUI | Node (tên gốc lặp theo chu kỳ 12) |
+|-----------|----------------------------------|
+| 1 (T1–12) | Thợ Mới, Xách Ba Lô, Tay Nghề, Đào Sâu, Nhánh Đào, Nhánh Xây, Kỹ Sư, Thợ Cả, Siêu Đào, Công Xưởng, Đại Công, Master Công |
+| 2 (T13–24) | Cùng bộ tên + hậu tố · 2 |
+| 3 (T25–36) | Cùng bộ tên + hậu tố · 3 |
+
+#### Độc sư (`/ascend path doc`)
+
+- **Ý tưởng:** Poison, kiểm soát & bền bỉ
+- **Chu kỳ buff:** `RESISTANCE → SPEED → NIGHT_VISION → REGENERATION → FIRE_RESISTANCE` (xoay theo tầng)
+- **Skill:** Nọc độc — Speed + Resistance
+- **Prefix node id:** `d1` … `d36`, nhánh `d12a`/`d12b`, `d24a`/`d24b`
+
+| Trang GUI | Node (tên gốc lặp theo chu kỳ 12) |
+|-----------|----------------------------------|
+| 1 (T1–12) | Nọc Độc, Lớp Da, Bóng Rừng, Hấp Thụ, Nhánh Độc, Nhánh Kiểm, Độc Vực, Tê Liệt, Huyết Nọc, Độc Thần, Vô Độc, Master Độc |
+| 2 (T13–24) | Cùng bộ tên + hậu tố · 2 |
+| 3 (T25–36) | Cùng bộ tên + hậu tố · 3 |
+
+#### Hỏa thần (`/ascend path hoa`)
+
+- **Ý tưởng:** Lửa, sức mạnh bùng nổ & áp lực
+- **Chu kỳ buff:** `FIRE_RESISTANCE → STRENGTH → SPEED → RESISTANCE → REGENERATION` (xoay theo tầng)
+- **Skill:** Bùng cháy — Strength + Fire Resistance
+- **Prefix node id:** `f1` … `f36`, nhánh `f12a`/`f12b`, `f24a`/`f24b`
+
+| Trang GUI | Node (tên gốc lặp theo chu kỳ 12) |
+|-----------|----------------------------------|
+| 1 (T1–12) | Tia Lửa, Lớp Than, Bùng Nổ, Hỏa Giáp, Nhánh Lửa, Nhánh Nổ, Diễm Long, Thiêu Đốt, Hỏa Thần, Dung Nham, Thiên Hỏa, Master Hỏa |
+| 2 (T13–24) | Cùng bộ tên + hậu tố · 2 |
+| 3 (T25–36) | Cùng bộ tên + hậu tố · 3 |
 
 ---
 
-## 11. Kỹ năng chủ động
+## Hợp đồng & Claim
 
-Xem bảng mục 5.  
-Điều kiện: path đã chọn, **≥ 3 node**, hết cooldown, `skills.enabled: true`.
-
----
-
-## 12. Nhiệt (Heat) · Prestige · Season
-
-### Heat (0–100)
-- Cộng khi kill / claim / ordeal / bounty
-- Decay khi idle (~30s không gain → trừ dần)
-- Tăng nhẹ payout risk / một số reward
-- **Dump về 0 khi chết**
-
-### Season points
-- Nhận từ claim, unlock node, ordeal, bounty, discovery, mastery…
-- Dùng mua **Prestige**
-- Chết: mất **~30%** (season-tax)
-
-### Prestige
-- Cost: **900** season / level (mặc định)
-- Max: **10**
-- Bonus: **+2%** thưởng hợp đồng / level (vĩnh viễn)
-- Không mất khi chết
-
-### Milestone season (tự nhận khi đủ)
-
-| Ngưỡng | Thưởng Điểm |
-|--------|-------------|
-| 150 | 120 |
-| 400 | 280 |
-| 800 | 500 |
-| 1500 | 900 |
-| 2500 | 1500 |
+- Tiến độ **tự đếm** (đào / giết / đi bộ trên đất / câu / craft).
+- **Không tự cộng Điểm** — phải `/ascend claim` hoặc click GUI.
+- Creative / bay / xe / chưa chọn path → **không đếm**.
+- Chết → **đứt streak**.
 
 ---
 
-## 13. Lớp RPG sâu (1.5.0)
+## Blood Contract (Risk)
 
-Tất cả chạy **trên event** (kill, unlock, claim, damage) — **không** thêm timer dày → bảo vệ TPS.
+```
+/ascend risk <số_điểm>
+```
 
-### Path Mastery
-Mở **đủ 12/12** node của path → **MASTER**:
-- Thưởng **2500 Điểm** (config)
-- + season, + di vật
-- Đánh dấu vĩnh viễn trên hồ sơ
-
-### Danh hiệu (Title)
-| Node đã mở | Danh hiệu |
-|------------|-----------|
-| 0–2 | Tân binh |
-| 3–5 | Nhập môn |
-| 6–9 | Tinh thông |
-| 10–11 | Lão luyện |
-| 12 / Mastery | Huyền thoại |
-
-### Kill Combo
-- Cửa sổ **4s** giữa 2 kill
-- Mỗi mốc ×5: thưởng nhỏ (có giới hạn)
-- Chết → combo về 0
-- Lưu **max combo** lịch sử
-
-### Khám phá (Discovery)
-Lần đầu hạ: Warden, Elder Guardian, Wither, Ender Dragon, Ravager, Piglin Brute, Wither Skeleton, Evoker → Điểm + 1 di vật + season nhỏ.
-
-### Di vật (Relics)
-- Rơi từ claim (weekly chắc hơn)
-- Đủ **10** tự đổi **40** season points
-
-### Path XP
-Tích khi unlock / claim / combo — chỉ số “độ gắn bó” path (hiển thị hồ sơ).
-
-### Clutch
-Khi máu rơi xuống **≤ 25% max HP** (sau damage):
-- CD **180s**
-- Cần ≥ 3 node
-- Buff ngắn 3s theo path (Strength/Speed, Invis, Speed III, Res+Regen)
+- Cược Điểm → trong thời gian phải **claim 1 hợp đồng**.
+- Thắng: thưởng × multiplier + hoàn cược.
+- Chết / hết giờ: **mất cược**.
 
 ---
 
-## 14. GUI · Lệnh · Quyền
+## Ordeal
 
-### GUI chính (`/ascend`)
-- Con đường (tiến độ X/12)
-- Hợp đồng
-- Huyết ước
-- Thử thách (hiện phí & điểm)
-- Truy nã (mô tả loại + đích danh)
-- Kỹ năng đường
-- Hướng dẫn 7 bước
-- Hồ sơ (danh hiệu, mastery, di vật, combo, khám phá…)
+Thử thách có thể chết. Phí vào bằng Điểm.
 
-### Lệnh người chơi
+| Ordeal | Ý tưởng |
+|--------|---------|
+| Sóng Xương | Đợt quái |
+| Giáng Lôi | Sét |
+| Hơi Wither | Wither + đói |
+| Void Pull / Blaze Rain / Poison Fog / Soul Drain | Biến thể khó |
 
+- **Thắng:** thưởng > phí (code ép lãi tối thiểu `min-net-profit`).
+- **Thua:** mất phí; đồ có thể được giữ tùy ordeal.
+- Trong ordeal: hạn chế táo vàng / potion hồi (config).
+
+---
+
+## Boss Event
+
+| Lệnh | Ai | Việc |
+|------|-----|------|
+| `/ascend bs` | Admin | Đặt **1** spawn (set mới ghi đè cũ) |
+| `/ascend bf <phút>` | Admin | Start boss, **bắt buộc** số phút |
+| `/ascend join` | Member | Trả phí, tele vào |
+
+- Boss = mob thù địch **random** (Ravager, Warden, Illusioner, …), scale **2–5**, buff mạnh.
+- Hết giờ: boss biến mất = **fail**, join **mất phí**.
+- Người **không join** không bị Boss đánh.
+- Thắng: Điểm cho người còn sống + đã gây damage.
+- **Mảnh Nâng Level chỉ người kết liễu** (hoặc top damage).
+
+---
+
+## Truy nã (Bounty)
+
+- Elite / đào sâu / truy nã player.
+- Nạn nhân được **báo tên hunter**.
+- Sống hết giờ → thưởng sống sót (anti-AFK + daily cap).
+- Bị hunter giết: **giữ đồ**, mất **50% Điểm**.
+- Chống clone: AFK check, combat time, pair cooldown.
+
+---
+
+## Mảnh Nâng Level & Bảo hiểm
+
+1. Ném **Mảnh** xuống đất cạnh giáp/vũ khí ≥ Kim Cương.
+2. Nâng Level: enchant **cố định theo level**, **không enchant tay** thêm.
+3. Mỗi lần nâng: **hồi 50% độ bền đã mất**.
+4. L1=1 mảnh · L2=3 · L3=5 · L4=8 · L5=12…
+5. `/ascend insurance` — 1 mảnh = 1 bảo hiểm chết.
+
+---
+
+## Mùa giải (Season)
+
+```yaml
+season:
+  length-weeks: 3          # chỉnh được
+  keep-score-percent: 50   # giữ 50% Điểm
+  reset-path: true         # reset path + node
+```
+
+- Hết hạn: **reset path**, giữ % Điểm (online).
+- Admin: `/aa seasonroll`.
+
+---
+
+## Lệnh
+
+### Người chơi
 | Lệnh | Mô tả |
 |------|--------|
-| `/ascend` · `/asc` · `/thienmenh` | Menu |
-| `/ascend path [kiem\|phap\|tham\|thu\|tree]` | Chọn / xem cây |
+| `/ascend` | Menu GUI |
+| `/ascend path [id]` | Chọn / xem path |
+| `/ascend path tree` | Cây kỹ năng |
 | `/ascend unlock <id>` | Mở node |
-| `/ascend contract` | Xem hợp đồng |
-| `/ascend claim [id]` | Nhận thưởng |
-| `/ascend stats` | Hồ sơ chat |
-| `/ascend risk <số>` | Huyết ước |
-| `/ascend prestige [buy]` | Xem / mua prestige |
-| `/ascend skill` | Kỹ năng |
-| `/ascend bounty` | GUI truy nã |
-| `/ascend guide` | Hướng dẫn |
-| `/ascend echo` | Echo thủ công |
-| `/ascend help` | Trợ giúp |
-
-**Quyền:** `allayascend.use` (default true).
+| `/ascend contract` | Hợp đồng |
+| `/ascend claim` | Nhận thưởng hợp đồng |
+| `/ascend risk <điểm>` | Blood Contract |
+| `/ascend skill` | Skill path |
+| `/ascend join` | Vào Boss |
+| `/ascend insurance` | Đổi mảnh → bảo hiểm |
+| `/ascend prestige` | Prestige |
+| `/ascend stats` | Hồ sơ |
+| `/ascend guide` | Hướng dẫn GUI |
 
 ### Admin
-
 | Lệnh | Mô tả |
 |------|--------|
-| `/aa reload` | Reload config + messages + paths |
-| `/aa reset <player>` | Xóa tiến độ 1 người (online) |
-| `/aa resetall confirm` | Xóa toàn server |
-| `/aa grant <player> <nodeId>` | Cấp node |
-| `/aa setpath <player> <KIEM\|…>` | Ép path |
-
-**Quyền:** `allayascend.admin` (default op).
-
----
-
-## 15. Echo & vòng lặp “muốn chơi tiếp”
-
-Sau path chọn / unlock / claim, plugin hiện **title + subtitle + chat** gợi ý **mục tiêu kế**:
-- Node tiếp theo + giá
-- Contract dở
-- Streak
-
-Actionbar định kỳ (mặc định ~400s) thì thầm lại `lastEcho` — đủ thưa để không spam, đủ đều để session dài vẫn có hướng.
+| `/ascend bs` | Set spawn Boss (1 điểm) |
+| `/ascend bf <phút>` | Bắt đầu Boss |
+| `/ascend bloodmoon` / `eclipse` | Event thế giới |
+| `/aa reload` | Reload |
+| `/aa reset <player>` | Reset 1 người |
+| `/aa resetall confirm` | Wipe toàn server |
+| `/aa grant <player> <node>` | Cấp node |
+| `/aa setpath <player> <PATH>` | Ép path |
+| `/aa seasonroll` | Sang mùa mới |
 
 ---
 
-## 16. Chiến lược chơi tối ưu
+## Config quan trọng
 
-### Tuần 1 (Tân binh)
-1. Chọn path khớp lối chơi thật (thợ mỏ → Thám, PvP → Kiếm/Thủ)
-2. Claim daily mỗi ngày — **bảo vệ streak**
-3. Mở k1–k3 (hoặc tương đương) sớm để skill + bonus contract
-4. Tránh ordeal / risk lớn khi Điểm mỏng
-
-### Tuần 2–3
-1. Weekly ore/boss khi party
-2. Bounty **có chọn lọc** (đừng spam hết 5 lượt nếu EV thấp)
-3. Risk chỉ khi 1 contract còn vài % và bạn an toàn
-4. Tích season → prestige sớm (+% vĩnh viễn)
-
-### Endgame path
-1. Mastery 12/12
-2. Prestige 10
-3. Sưu tầm discovery + max combo cá nhân
-4. Đổi path chỉ khi chắc chắn (phí 120k + mất node)
-
-### PvP / hardcore survival
-- Thủ / Kiếm ưu tiên Res + Regen
-- Pháp invis chu kỳ để disengage
-- Thám kiting + haste đào gear nhanh hơn
+| Key | Ý nghĩa |
+|-----|---------|
+| `path-change-cost` | Phí đổi path |
+| `season.length-weeks` | Độ dài mùa |
+| `season.keep-score-percent` | % Điểm giữ khi sang mùa |
+| `boss.schedule-window-hours` | Cửa sổ sau `/bs` (mặc định 72) |
+| `boss.scale-min` / `scale-max` | Scale boss 2–5 |
+| `ordeal.min-net-profit` | Lãi tối thiểu khi thắng ordeal |
+| `contracts-rules.*` | Anti-AFK / claim |
 
 ---
 
-## 17. Cân bằng kinh tế & chống lạm phát
+## License
 
-Thiết kế **daily net thấp**, **phí ordeal/bounty cao**, **thưởng bị siết**:
-
-- Claim cap 1200
-- Ordeal max reward 420, phí 1200–2000
-- Bounty decay + daily earn cap 1600 + max 5/day
-- Risk mult chỉ 1.30 (không phải x2+ dễ vỡ)
-- Node đắt dần → sink Điểm khổng lồ
-- Death đốt Điểm + streak + heat + season tax
-
-**Farm clone** bị chặn bằng AFK check, combat time, pair CD, entity ticks.
-
----
-
-## 18. Hiệu năng (TPS)
-
-| Việc | Tần suất |
-|------|----------|
-| Pulse path buff | 60 ticks |
-| Echo actionbar | 8000 ticks |
-| Autosave | 6000 ticks (async schedule → save sync) |
-| Heat decay | 100 ticks |
-| Bounty expire | 200 ticks |
-| Contract daily sweep | 1200 ticks |
-
-**Không** có scanner entity toàn map, **không** AI custom nặng.  
-Ordeal chỉ spawn local quanh player và cleanup UUID list.  
-Combo / discovery / clutch = O(1) trên event.
-
----
-
-## 19. Cấu hình đầy đủ
-
-File: `plugins/AllayAscend/config.yml`
-
-Các nhóm chính:
-- `path-change-cost`
-- `risk.*` · `heat.*` · `death.*` · `prestige.*`
-- `skills.*` · `login-bonus.*`
-- `contracts-rules.*` · `contracts.<id>.*`
-- `bounty.*` (gồm anti-farm)
-- `ordeal.*` từng loại
-- `rpg.*` (mastery, combo, relic, clutch)
-- `milestones` list
-- `performance.*`
-
-Messages: `messages.yml` (MiniMessage).  
-Progress: `progress.yml` (không sửa tay khi server online).
-
-Sau chỉnh: `/aa reload` (path trees + messages + config). Một số timer chỉ đọc lúc enable → restart nếu đổi interval.
-
----
-
-## 20. Admin toolkit
-
-- Theo dõi inflation: so sánh tốc độ claim vs sink node
-- `reset` khi exploit; `resetall` chỉ maintenance season mới
-- `grant` / `setpath` cho event / đền bù
-- Bật `allayascend.bounty.immune` cho staff nếu cần
-- Backup `progress.yml` trước wipe
-
----
-
-## 21. FAQ · Troubleshooting
-
-**Q: Thử thách không chạy dù đủ điểm?**  
-A: Cần AllayScore hook. Bản 1.4.4+ đã fix Attribute max-health crash + refund nếu lỗi. Xem message thiếu điểm / cooldown / economy.
-
-**Q: Contract không tăng?**  
-A: Chưa chọn path; đang Creative; walk đang fly/glide; hoặc đã claim hôm đó.
-
-**Q: Truy nã người không tính kill?**  
-A: Mục tiêu AFK; combat &lt; 3s; không đúng UUID mục tiêu; hoặc đã hết giờ.
-
-**Q: Đổi path mất hết skill tree?**  
-A: Đúng design — fee + soft reset node.
-
-**Q: Invis Pháp vĩnh viễn?**  
-A: Không. Chỉ pulse 4s/45s từ node p6.
-
-**Q: Có cần PlaceholderAPI?**  
-A: Không bắt buộc cho core 1.5.0.
-
----
-
-## 22. Changelog ý tưởng 1.5.0
-
-- 12 node / path + GUI tiến độ  
-- Ordeal an toàn API + GUI phí rõ  
-- Bounty đích danh + keep inv khi bị săn  
-- Anti-farm AFK/clone/pair/daily cap/decay  
-- RpgDepth: Mastery, Title, Combo, Discovery, Relics, Path XP, Clutch  
-- PotionEffectType hiện đại (Paper 1.20.5+)
-
----
-
-## Phụ lục A — Vòng lặp session mẫu (60–90 phút)
-
-```text
-Login → nhận login bonus
-→ /ascend xem contract gần xong
-→ chơi (mine/kill/travel) 20–40 phút
-→ claim daily (+streak)
-→ mở 1 node nếu đủ Điểm
-→ (optional) bounty 1 lượt nếu an toàn
-→ (optional) risk nếu contract còn 1 cái gần done
-→ logout khi còn streak, không liều death vô ích
-```
-
-## Phụ lục B — Thuật ngữ nhanh
-
-| Thuật ngữ | Nghĩa |
-|-----------|--------|
-| Path | Con đường RPG cố định |
-| Node | Ô skill tree, cost Điểm |
-| Điểm | Currency AllayScore |
-| Claim | Nhận thưởng contract thủ công |
-| Streak | Chuỗi ngày claim daily |
-| Heat | Nhiệt tạm, boost nhẹ |
-| Risk / Huyết ước | Cược Điểm vào claim |
-| Ordeal | Thử thách sống sót có phí |
-| Bounty / Truy nã | Mục tiêu có thời hạn |
-| Season | Điểm mùa → Prestige |
-| Mastery | Full 12 node |
-| Relic | Di vật đổi season |
-| Clutch | Buff khi suýt chết |
-| Echo | Gợi ý mục tiêu tiếp |
-
----
-
-*Tài liệu này mô tả hành vi mặc định AllayAscend **1.5.0** theo source. Số liệu có thể đổi theo `config.yml` server của bạn.*
-
-**AllayAscend** — *Commit to a path. Survive the score. Ascend.*
+MIT © 2026 AllayMC
