@@ -1,7 +1,8 @@
-# ⚔️ AllayAscend **1.0.13**
+# ⚔️ AllayAscend **1.0.20**
 
 > Plugin RPG gắn **AllayScore (Điểm)** cho **Paper 1.20+**  
-> Path + node sống sót qua chết · Điểm / streak / risk cháy khi chết
+> Path + node sống sót qua chết · Điểm / streak / risk cháy khi chết  
+> Gear level bằng **kết liễu Boss** · skill giáp = kháng / phản / thoát chết (không buff)
 
 ```
 Java 21  ·  Paper 1.20.x  ·  Soft-depend: AllayScore  ·  MIT © 2026 AllayMC
@@ -23,21 +24,16 @@ mvn -q clean package
 | 3 | [Hệ thống Điểm & chết](#-hệ-thống-điểm--chết) |
 | 4 | [9 Con đường (Path)](#-9-con-đường-path) |
 | 5 | [Đổi path (GUI)](#-đổi-path-nút-gui) |
-| 6 | [Cây kỹ năng (36 node)](#-cây-kỹ-năng-36-node) |
-| 7 | [Thiên Mệnh & Claim](#-thiên-mệnh--claim) |
-| 8 | [Blood Contract (Risk)](#-blood-contract-risk) |
-| 9 | [Ordeal](#-ordeal) |
-| 10 | [Boss Event](#-boss-event) |
-| 11 | [Truy nã (Bounty)](#-truy-nã-bounty) |
-| 12 | [**Mảnh Nâng Level · Thuộc tính · Skill**](#-mảnh-nâng-level--thuộc-tính--skill) ⭐ |
-| 13 | [Giờ Vàng Vắng](#-giờ-vàng-vắng-quiet-bonus) |
-| 14 | [Mùa giải](#-mùa-giải-season) |
-| 15 | [Kỹ năng chủ động Path](#-kỹ-năng-chủ-động) |
-| 16 | [Luật server trong code](#-luật-server-liên-quan-ascend) |
-| 17 | [Lệnh người chơi](#-lệnh-người-chơi) |
-| 18 | [Lệnh admin](#-lệnh-admin) |
-| 19 | [Config quan trọng](#-config-quan-trọng) |
-| 20 | [Changelog 1.0.13](#-changelog-1013) |
+| 6 | [Cây kỹ năng](#-cây-kỹ-năng-36-node) |
+| 7 | [Thiên Mệnh](#-thiên-mệnh--claim) |
+| 8 | [Risk / Ordeal / Bounty](#-risk--ordeal--bounty) |
+| 9 | [Boss Event](#-boss-event) |
+| 10 | [**Nâng Level Gear**](#-nâng-level-gear-boss--thuộc-tính--skill) ⭐ |
+| 11 | [Skill path (vũ khí & giáp)](#-skill-max--chỉ-đúng-path) |
+| 12 | [Giờ Vàng Vắng](#-giờ-vàng-vắng) |
+| 13 | [Lệnh](#-lệnh) |
+| 14 | [Config](#-config-quan-trọng) |
+| 15 | [Changelog](#-changelog) |
 
 ---
 
@@ -47,7 +43,6 @@ mvn -q clean package
 1. Cài AllayScore trước (economy Điểm)
 2. Thả AllayAscend.jar vào plugins/
 3. Restart server
-4. (Tuỳ chọn) AllayShop cho /shop
 ```
 
 ---
@@ -55,20 +50,18 @@ mvn -q clean package
 ## 🎮 Cách chơi nhanh
 
 ```
-1. Farm XP / chơi → có Điểm (AllayScore)
-2. /ascend → chọn 1 Path (GUI)
-3. Mở node trên cây (GUI 3 trang × 12)
-4. Làm Thiên Mệnh → CLAIM khi xong
-5. (Muộn) Risk / Ordeal / Boss / Bounty / Mảnh Level
+1. Có Điểm (AllayScore) → /ascend → chọn Path
+2. Mở node trên cây (GUI 3 trang)
+3. Thiên Mệnh → CLAIM khi đủ
+4. Boss Event → kết liễu để nâng level gear đang cầm / mặc
+5. (Tuỳ) Risk · Ordeal · Bounty · Prestige
 ```
-
-**3 câu nhớ**
 
 | | |
 |---|---|
 | 1️⃣ | `/ascend` = menu chính |
 | 2️⃣ | Thiên Mệnh xong phải **claim** mới có Điểm |
-| 3️⃣ | Chết mất **Điểm** · **không mất** node đã mở |
+| 3️⃣ | Chết mất **Điểm** · **không mất** node / level gear trên item |
 
 ---
 
@@ -76,126 +69,79 @@ mvn -q clean package
 
 | ❌ Mất khi chết | ✅ Giữ khi chết |
 |-----------------|-----------------|
-| Điểm AllayScore + Rank | Path + node đã mở |
+| Điểm AllayScore | Path + node đã mở |
 | Streak Thiên Mệnh | Prestige |
-| Tiền cược Risk | — |
-| Phí Ordeal (nếu đang chơi) | — |
-| Heat | — |
+| Risk / heat / phí Ordeal | Level trên **item** (NBT) |
 
-**Bảo hiểm chết** (`/ascend insurance`): đổi **1 Mảnh Nâng Level** → chết **giữ đồ**, chỉ mất **70% Điểm**.
+**Bảo hiểm chết** (`/ascend insurance`): đổi 1 Cục Netherite → chết **giữ đồ**, mất ~70% Điểm.
 
-Trong **Boss** đã join hoặc **Ordeal**: giữ đồ theo luật riêng của event.
+Boss đã join / Ordeal: giữ đồ theo luật event.
 
 ---
 
 ## 🛤️ 9 Con đường (Path)
 
-Chọn **1** path. Mỗi path ~**36 node**, buff passive nhẹ, skill chủ động riêng.
+Chọn **1** path. ~36 node, buff passive, skill chủ động (`/ascend skill`, cần ≥3 node).
 
-| ID | Tên | Phong cách | Skill (`/ascend skill`) |
-|----|-----|------------|-------------------------|
-| `kiem` | **Kiếm sĩ** | Cận chiến, ST & sức bền | Cuồng nộ — Strength + Speed |
-| `phap` | **Pháp sư** | Di chuyển, hiệu ứng & sinh tồn | Dịch chuyển — blink + slow falling |
-| `tham` | **Thám hiểm** | Tốc độ, đào quặng & cơ động | Xung kích — dash + Speed |
-| `thu` | **Thủ hộ** | Phòng thủ, hồi phục & chống chết | Củng cố — Resistance + Absorption |
-| `cung` | **Cung thủ** | Tầm xa, tốc độ kéo & cơ động | Mưa tên — Speed + Jump |
-| `linh` | **Linh hồn** | Hấp thụ, NV & kháng hiệu ứng | Lớp hồn — Invis ngắn + Resistance |
-| `cong` | **Công binh** | Đào, craft, Haste & tiện ích | Xung công — Haste + Speed |
-| `doc` | **Độc sư** | Poison, kiểm soát & bền bỉ | Nọc độc — Speed + Resistance |
-| `hoa` | **Hỏa thần** | Lửa, sức mạnh bùng nổ | Bùng cháy — Strength + Fire Res |
-
-> Skill cần **≥ 3 node** đã mở. Cooldown theo `skills.*`.  
-> Buff path refresh định kỳ duration dài — **Night Vision không chớp tắt**.
+| ID | Tên | Skill chủ động |
+|----|-----|----------------|
+| `kiem` | Kiếm sĩ | Cuồng nộ — Strength + Speed |
+| `phap` | Pháp sư | Dịch chuyển — blink |
+| `tham` | Thám hiểm | Xung kích — dash |
+| `thu` | Thủ hộ | Củng cố — Resistance + Absorption |
+| `cung` | Cung thủ | Mưa tên — Speed + Jump |
+| `linh` | Linh hồn | Lớp hồn — Invis + Resistance |
+| `cong` | Công binh | Xung công — Haste + Speed |
+| `doc` | Độc sư | Nọc độc — Speed + Resistance |
+| `hoa` | Hỏa thần | Bùng cháy — Strength + Fire Res |
 
 ---
 
 ## 🔄 Đổi path (nút GUI)
 
-> **Không còn** lệnh `/ascend path <id>` để chọn / đổi.
+> **Không** dùng lệnh để chọn path.
 
 ```
-/ascend → Con đường → nút «Đổi con đường» (góc dưới trái, compass)
-       → chọn path mới trong menu 9 ô
+/ascend → Con đường → «Đổi con đường» → chọn path mới
 ```
 
 | Lần | Chi phí |
 |-----|---------|
-| Lần đầu chọn | **Miễn phí** |
-| Đổi sau | `path-change-cost` (mặc định **120.000 Điểm**) + **reset toàn bộ node** |
-
-`/ascend path` chỉ **liệt kê** · `/ascend path tree` xem cây text.
+| Lần đầu | Miễn phí |
+| Đổi sau | `path-change-cost` (mặc định **120.000 Điểm**) + **reset node** |
 
 ---
 
 ## 🌳 Cây kỹ năng (36 node)
 
-- GUI **3 trang × 12** node
-- Giá tăng dần: `4500 × 1.28^(n-1)`
-- **Nhánh A/B** tại mốc **12** và **24** (chỉ chọn 1)
-- Node sau nhánh: cần **một trong hai** (OR)
-
-### Bảng giá tham khảo
-
-| Tầng | Giá (Điểm) | Tầng | Giá (Điểm) |
-|------|------------|------|------------|
-| T1 | 4.500 | T18 | 299.100 |
-| T2 | 5.800 | T24 | 1.315.400 |
-| T5 | 12.100 | T30 | 5.775.000 |
-| T12 | 68.000 | T36 | 8.000.000 |
+- GUI **3 trang × 12** · giá tăng dần  
+- Nhánh A/B tại mốc 12 và 24 (chỉ chọn 1)  
+- Buff path **không mất khi chết**
 
 ---
 
 ## 📜 Thiên Mệnh & Claim
 
-Nhiệm vụ **cá nhân**, adaptive theo path & sức.
-
 | | |
 |---|---|
-| Mỗi ngày | **3** Thiên Mệnh |
-| Mỗi tuần | **1** Thiên Mệnh tuần |
-| Underdog | Ít node → thưởng cao hơn (tối đa ~**×1.75**) |
+| Ngày | 3 fate · Tuần | 1 fate |
+| Underdog | Ít node → thưởng cao hơn (tối đa ~×1.75) |
 | Soft tax | ≥24 node → giảm nhẹ thưởng |
-| Claim | **Bắt buộc** click / `/ascend claim` mới nhận Điểm |
+| Claim | **Bắt buộc** click / `/ascend claim` |
 | Chết | **Đứt streak** |
 
-Không đếm: Creative / bay / xe / chưa chọn path.
-
 ---
 
-## 🩸 Blood Contract (Risk)
+## 🩸 Risk · Ordeal · Bounty
 
-```
-/ascend risk <số_điểm>   hoặc GUI «Huyết ước»
-```
+**Blood Contract (`/ascend risk`)**  
+Cược Điểm → claim 1 Thiên Mệnh trong thời gian. Thắng: hệ số + hoàn cược. Chết/hết giờ: mất cược.
 
-```
-Cược Điểm ──► trong thời gian claim 1 Thiên Mệnh
-   │
-   ├─ Thắng: thưởng × multiplier + hoàn cược
-   └─ Chết / hết giờ: mất cược
-```
+**Ordeal**  
+Thử thách có phí · cấm táo vàng / potion / sữa. Thắng lãi tối thiểu (`min-net-profit`). Thoát game: hoàn 50%.
 
-Mặc định: min **500** · max **4000** · duration **600s** · mult ~**1.50**.
-
----
-
-## ☠️ Ordeal
-
-Thử thách có thể chết. Phí vào bằng Điểm. **Cấm** táo vàng / potion / sữa trong lúc thi.
-
-| Ordeal | Ý tưởng |
-|--------|---------|
-| Sóng xương | Đợt quái |
-| Giáng lôi | Sét |
-| Hơi wither | Wither + đói |
-| Hút vực | Kéo xuống + levitation |
-| Mưa lửa | Fireball + blaze |
-| Sương độc | Poison + damage |
-| Hút hồn | Wither + hút máu |
-
-- **Thắng:** thưởng > phí (enforce `min-net-profit`)
-- **Thua:** mất phí · đồ giữ trong ordeal
-- Thoát game giữa chừng: hoàn **50%** phí + cooldown nhẹ
+**Truy nã**  
+Elite / đào / săn player. Nạn nhân bị hunter giết: **giữ đồ**, mất 50% Điểm.
 
 ---
 
@@ -203,164 +149,161 @@ Thử thách có thể chết. Phí vào bằng Điểm. **Cấm** táo vàng / 
 
 | Lệnh | Ai | Việc |
 |------|-----|------|
-| `/ascend bs` | Admin | Đặt **1** spawn (ghi đè cũ) |
-| `/ascend bf <phút>` | Admin | Start boss, **bắt buộc** số phút |
+| `/ascend bs` | Admin | Đặt 1 spawn |
+| `/ascend bf <phút>` | Admin | Start (1–180 phút) |
 | `/ascend join` | Member | Trả phí, tele vào |
 | `/ascend bstop` | Admin | Ép dừng |
 
-- Boss = mob thù địch random (Ravager, Warden, …), scale **2–7**
-- Hết giờ = boss biến mất = **fail**, join **mất phí**
-- Người **không join** không bị Boss đánh
-- Thắng: Điểm cho người còn sống + đã gây damage
-- **Mảnh Nâng Level** cho người kết liễu (hoặc top damage)
+- Boss random (Ravager, Warden, …), scale **2–7**
+- **BossBar** máu realtime cho người đã join
+- HP ≤ **20%** → **bão sét 3s** giáng quanh người tham chiến (**1 lần / fight**)
+- Kết liễu (`getKiller`) → **tiến trình level gear** (cầm + giáp mặc)
+- Hết giờ = fail, mất phí join · người không join không bị boss đánh
+
+```yaml
+boss:
+  enrage-hp-percent: 0.20
+  storm-duration-seconds: 3
+  storm-interval-ticks: 8
+```
 
 ---
 
-## 🎯 Truy nã (Bounty)
+## 💎 Nâng Level Gear (Boss) · Thuộc tính · Skill
 
-- Elite / đào sâu / truy nã player
-- Nạn nhân được **báo tên hunter**
-- Sống hết giờ → thưởng sống sót (anti-AFK + daily cap)
-- Bị hunter giết: **giữ đồ**, mất **50% Điểm**
-- Chống clone: AFK check, combat time, pair cooldown
+### Cách nâng — chỉ kết liễu Boss
 
----
+> **Không** craft · **không** ném đất · **không** click túi để nâng level.  
+> Admin: `/ascend up <level>` (cầm item tay chính, `allayascend.admin`).
 
-## 💎 Mảnh Nâng Level · Thuộc tính · Skill
+| Gear | Cộng tiến trình |
+|------|-----------------|
+| Kiếm / rìu / spear / tool | Kết liễu Boss khi **cầm** |
+| **Giáp** (nón/áo/quần/giày) | Kết liễu Boss khi **đang mặc** — **cùng công thức** kiếm |
+| Cung / nỏ / trident | Kết liễu bằng **projectile** (đúng người bắn) |
+| Mace | Cầm mace → thanh tiến trình → **Ultra** (mặc định **12** boss) |
+| **Khiên** | **Đỡ đòn Boss** (+1 tiến trình mỗi lần đỡ) |
 
-### Cách nâng
+**Công thức** (`level-gear.boss-progress`):
 
 ```
-1. Ném Mảnh Nâng Level xuống đất cạnh giáp/vũ khí ≥ Kim Cương
-   (hoặc craft đúng công thức theo level trên bàn crafting)
-2. Enchant cố định theo level — không enchant tay thêm
-3. Mỗi lần nâng: hồi 50% độ bền đã mất
-4. Chi phí mảnh: L1=1 · L2=3 · L3=5 · L4=8 · L5=12 · …
-5. /ascend insurance — 1 mảnh = 1 bảo hiểm chết
-6. Gear Ascend: cấm Anvil / Enchant table / Mending
+cần = base + level × step
+mặc định base=1 · step=2
+→ Lv0→1: 1 · Lv1→2: 3 · Lv2→3: 5 · Lv3→4: 7 …
 ```
 
-### Max level theo loại
+Tiến độ lưu **NBT `boss_progress`** trên item + thanh `[■■■□□]` trên lore.
+
+```
+Diamond Sword / Chestplate Lv.1 · cần 3 boss → Lv.2
+  Tiến độ Boss → Lv.2: 2/3
+  [■■■■■■□□□□]
+```
+
+### Max level
 
 | Loại | Max |
 |------|-----|
-| Vũ khí / giáp / tool (Mảnh Level) | **15** |
+| Vũ khí cận / giáp / tool | **15** |
 | Cung | **5** |
-| Nỏ | **3** |
-| Trident | **3** |
-| Khiên | **3** |
-| **Mace Ultra** | **1 bậc** (không hiện Lv) |
+| Nỏ · Trident · Khiên | **3** |
+| Mace Ultra | **1 bậc** |
 
-### ⚡ Thuộc tính cộng dồn theo Level (1.0.13+)
+### Thuộc tính mỗi level
 
-Mỗi level cộng thêm — **cộng dồn**, hiện rõ trên lore:
+| Stat | Công thức |
+|------|-----------|
+| Sát thương (vũ khí) | **+3% / level** cộng dồn |
+| Độ bền | **+3% / level** giảm hao · trần **60%** |
+| Giáp | **+0.25 Armor** + **+0.20 Toughness** / level |
+| Xuyên giáp | Từ **Lv.10** (gear max 15): +2% / level |
 
-| Stat | Công thức | Ví dụ |
-|------|-----------|--------|
-| **Sát thương** | **+3% / level** | Lv.1 = +3% · Lv.5 = +15% · Lv.15 = +45% |
-| **Độ bền** | **+3% / level** (giảm hao) · **trần 60%** | Lv.1 = −3% hao · Lv.10 = −30% · cap 60% |
-| **Giáp** | +0.1 Armor + +0.15 Toughness / level | Lv.15 ≈ +1.5 armor · +2.25 toughness |
+### Enchant giáp mỗi level
 
-```
-┌─────────────────────────────────────────────────────────┐
-│  Diamond Sword Lv.5                                     │
-│  ─────────────────────────────────────────────────────  │
-│  Cấp độ: 5/15                                           │
-│  +15% sát thương  (+3%/level · cộng dồn)               │
-│  +15% độ bền      (giảm hao · +3%/level · trần 60%)    │
-│  Không enchant thêm · không sửa / Mending               │
-└─────────────────────────────────────────────────────────┘
-```
+- **Protection** = `min(4, level)` — mỗi level +1 (tới 4)
+- Unbreaking tăng theo level
+- Phụ: Projectile / Blast / Fire Protection · Thorns (Lv≥10)
+- Giày: Feather Falling · Depth Strider · Nón: Respiration · Aqua Affinity
 
-**Cách áp dụng kỹ thuật**
+### Khiên knockback
 
-| Loại | Cơ chế |
-|------|--------|
-| Cận chiến (kiếm, rìu, spear, mace, trident) | `AttributeModifier` MULTIPLY trên `ATTACK_DAMAGE` |
-| Cung / nỏ / trident (projectile) | Nhân damage trong event khi mũi tên trúng |
-| Mọi gear Ascend | `PlayerItemDamageEvent` giảm hao theo % |
-| Giáp (nón/áo/quần/giày) | Attribute ARMOR + ARMOR_TOUGHNESS |
+| Level | Khi đỡ |
+|-------|--------|
+| 1 | Nhẹ |
+| 2 | ~2 block |
+| 3 | ~3–4 block |
 
-> **Gear level cũ** (trước bản 1.0.13) tự nhận thuộc tính khi **login** hoặc **dùng lần đầu** — không mất UID, không cần nâng lại.
+---
 
-Config:
+## 🗡️ Skill max — chỉ đúng PATH
+
+Điều kiện chung:
+
+1. Item đạt **max level** loại đó  
+2. Player theo **đúng path** signature  
+
+Enchant passive dùng được **mọi path**. Skill max **chỉ** đúng path.
+
+### Vũ khí / tool
+
+| Path | Gear | Skill |
+|------|------|--------|
+| **Kiếm sĩ** | Kiếm max | +ST + hất khi đánh |
+| **Kiếm sĩ** | **Mace Ultra** | ~28% proc: hất + chấn ≤4 mob + hồi bền · Weakness+Slow 5s |
+| **Độc sư** | Rìu max | Poison + Slow mục tiêu |
+| **Hỏa thần** | Spear max | Đốt + ST phụ |
+| **Pháp sư** | Hoe max | Speed + Slow Falling khi dùng |
+| **Công binh** | Cuốc / Xẻng max | Haste khi đào |
+| **Cung thủ** | Cung / Nỏ max | Skill projectile (theo hệ nếu có) |
+| **Thám hiểm** | Trident max | Skill projectile |
+
+### Giáp — không buff potion (1.0.20)
+
+Xử lý trực tiếp trên **đòn đánh** (giảm dame / phản / thoát chết):
+
+| Path | Gear max | Hiệu ứng |
+|------|----------|----------|
+| **Thủ hộ** | Áo · Quần · Khiên | **−15% dame nhận** + **phản 12%** lên attacker |
+| **Linh hồn** | Nón | **12%** né mạnh → đòn đó còn **30%** dame |
+| **Thám hiểm** | Giày | **8%** thoát chết (còn **1 máu**, CD **45s**) |
 
 ```yaml
 level-gear:
-  damage-percent-per-level: 3      # % ST mỗi level
-  durability-percent-per-level: 3  # % giảm hao mỗi level
-  max-level: 15
+  armor-skill:
+    reduce-percent: 0.15
+    reflect-percent: 0.12
+    phase-chance: 0.12
+    clutch-chance: 0.08
+    clutch-cd-ms: 45000
 ```
 
-### 🛡️ Khiên level
+Sai path → chỉ còn enchant + attribute, **không** skill giáp.
 
-| Level | Knockback khi đỡ |
-|-------|------------------|
-| Lv.1 | Nhẹ |
-| Lv.2 | Trung bình (~2 block) |
-| Lv.3 | Mạnh (~3–4 block) |
-
-### 🗡️ Skill max theo path (signature)
-
-Skill max **chỉ kích** khi:
-
-1. Gear đạt **max level** loại đó  
-2. Player đang theo **đúng path** của món signature  
-
-| Path | Gear signature | Skill khi max |
-|------|----------------|---------------|
-| **Kiếm sĩ** | Kiếm · Mace Ultra | Kiếm: +ST + hất · Mace: % proc hất/chấn + hồi bền + debuff 5s |
-| **Độc sư** | Rìu | Poison + slow mục tiêu |
-| **Hỏa thần** | Spear | Đốt + ST phụ |
-| **Pháp sư** | Hoe | Speed + Slow Falling khi dùng |
-| **Công binh** | Cuốc · Xẻng | Haste khi đào |
-| **Thủ hộ** | Áo · Quần · Khiên | Absorption + kháng khi bị đánh / đỡ |
-| **Linh hồn** | Nón | Invis ngắn + kháng khi bị đánh |
-| **Thám hiểm** | Giày · Trident | Giày: Speed + Jump khi bị đánh · Trident max: skill huy hiệu |
-| **Cung thủ** | Cung · Nỏ | Skill max theo huy hiệu (Huyết/Địa/Thiên/Thí) |
-
-> Enchant passive dùng được **mọi path**. Skill max **chỉ** đúng path.
-
-### 🔨 Mace Ultra
+### Mace Ultra
 
 ```
-Công thức:  3 Mảnh Level  +  đủ 4 huy hiệu  +  1 mace
-Kết quả:    Mace Ultra (không hiện Lv.1)
-Enchant:    Density V · Breach IV · Unbreaking III
-Skill:      ~28% proc · path Kiếm sĩ · Weakness+Slowness 5s · hồi độ bền đặc biệt
-```
-
-### Cung / Nỏ / Trident (huy hiệu)
-
-- Chỉ **1 loại huy hiệu** (khóa path), không trộn
-- Lv.1 cần 5 huy hiệu · mỗi level +5
-- Huyết = ST · Địa = bền · Thiên = đặc biệt · Thí = kiểm soát
-
----
-
-## 🌙 Giờ Vàng Vắng (Quiet Bonus)
-
-Chỉ khi server **vắng** (online ≤ `drop-max-online`, mặc định **12**):
-
-```
-Mảnh sưu tập (Huyết Ảnh · Địa Mạch · Thiên Cơ · Thí Luyện)
-        │
-        ├─ ghép mảnh cùng loại → Huy hiệu
-        └─ 5 huy hiệu → 1 Mảnh Nâng Level
-```
-
-- Rơi từ: tinh anh / đào kim cương·debris / claim fate / thắng ordeal
-- R-click huy hiệu → bonus nhỏ (buff / Điểm)
-- Hệ số Điểm nhẹ khi server vắng
-
-```
-/ascend essence help
-/ascend essence craft
+Cách: cầm Mace kết liễu đủ boss (mặc định 12) → Ultra
+Enchant: Density V · Breach IV · Unbreaking III
+Skill: path Kiếm sĩ · % proc · debuff 5s · hồi độ bền
 ```
 
 ---
 
-## 📅 Mùa giải (Season)
+## 🌙 Giờ Vàng Vắng
+
+Khi server **vắng** (online ≤ `drop-max-online`):
+
+- Rơi **Cục Kim Cương** sưu tập (Huyết / Địa / Thiên / Thí) — NBT
+- Ghép: `/ascend essence craft` hoặc click trong túi
+- Huy hiệu = `NETHERITE_INGOT` + NBT · R-click dùng buff nhỏ
+- 5 huy hiệu → 1 **Cục Netherite · Nâng Level** (bảo hiểm / redeem)
+
+> Cục custom **không đặt** xuống đất (mất NBT).  
+> **Level gear không** dùng cục để nâng nữa — chỉ Boss kill.
+
+---
+
+## 📅 Mùa giải
 
 ```yaml
 season:
@@ -369,71 +312,37 @@ season:
   reset-path: true
 ```
 
-- Hết hạn: **reset path**, giữ % Điểm (online)
-- Admin: `/aa seasonroll`
+Admin: `/aa seasonroll`
 
 ---
 
-## ✨ Kỹ năng chủ động
+## ⌨️ Lệnh
 
-`/ascend skill` hoặc icon trong menu chính.
-
-- Cần path + **≥ 3 node**
-- Cooldown theo path (`skills.*`)
-- Không stack spam — message khi đang CD
-
----
-
-## ⚖️ Luật server liên quan Ascend
-
-Các rule **có trong code** (khi plugin bật):
-
-| Rule | Chi tiết |
-|------|----------|
-| **Đổi path** | Chỉ qua nút GUI «Đổi con đường» |
-| **Mending nerf** | Vanilla Mending chỉ hồi **50%** · Gear Ascend **cấm** Mending |
-| **Triệt sản Villager** | Villager **không sinh sản** |
-| **Night Vision** | Duration dài hơn pulse → **không chớp tắt** |
-| **Ordeal** | Cấm táo vàng, potion, sữa, mật ong |
-
----
-
-## ⌨️ Lệnh người chơi
+### Người chơi
 
 | Lệnh | Mô tả |
 |------|--------|
 | `/ascend` | Menu GUI |
-| `/ascend path` | Liệt kê 9 path (không chọn) |
-| `/ascend path tree` | Cây kỹ năng (text) |
+| `/ascend path` / `path tree` | Liệt kê / cây text |
 | `/ascend unlock <id>` | Mở node |
-| `/ascend fate` | Thiên Mệnh |
-| `/ascend claim` | Nhận thưởng fate |
+| `/ascend fate` · `claim` | Thiên Mệnh |
 | `/ascend risk <điểm>` | Blood Contract |
-| `/ascend skill` | Skill path |
+| `/ascend skill` | Skill path chủ động |
 | `/ascend join` | Vào Boss |
-| `/ascend insurance` | Đổi mảnh → bảo hiểm |
-| `/ascend prestige` | Prestige |
-| `/ascend stats` | Hồ sơ |
-| `/ascend guide` | Hướng dẫn GUI |
-| `/ascend bounty` | Truy nã |
+| `/ascend insurance` | Bảo hiểm chết |
+| `/ascend prestige` · `stats` · `guide` · `bounty` | — |
 | `/ascend essence` | Sưu tập Giờ Vàng |
 
----
-
-## 🛠️ Lệnh admin
+### Admin (`allayascend.admin`)
 
 | Lệnh | Mô tả |
 |------|--------|
-| `/ascend bs` | Set spawn Boss (1 điểm) |
+| `/ascend up [level]` | Set level **item tay chính** (Mace → Ultra) |
+| `/ascend bs` | Set spawn Boss |
 | `/ascend bf <phút>` | Bắt đầu Boss |
 | `/ascend bstop` | Ép dừng Boss |
-| `/ascend bloodmoon` / `eclipse` | Event thế giới |
-| `/aa reload` | Reload |
-| `/aa reset <player>` | Reset 1 người |
-| `/aa resetall confirm` | Wipe toàn server |
-| `/aa grant <player> <node>` | Cấp node |
-| `/aa setpath <player> <PATH>` | Ép path |
-| `/aa seasonroll` | Sang mùa mới |
+| `/aa reload` · `reset` · `resetall confirm` | — |
+| `/aa grant` · `setpath` · `seasonroll` | — |
 
 Permission: `allayascend.use` (default true) · `allayascend.admin` (op).
 
@@ -443,38 +352,47 @@ Permission: `allayascend.use` (default true) · `allayascend.admin` (op).
 
 | Key | Ý nghĩa | Mặc định |
 |-----|---------|----------|
-| `path-change-cost` | Phí đổi path (GUI) | 120000 |
-| `level-gear.damage-percent-per-level` | **% ST mỗi level** | **3** |
-| `level-gear.durability-percent-per-level` | **% giảm hao mỗi level** | **3** |
-| `level-gear.max-level` | Max vũ khí/giáp/tool | 15 |
-| `level-gear.shield-max-level` | Max khiên | 3 |
-| `level-gear.bow-max-level` | Max cung | 5 |
-| `season.length-weeks` | Độ dài mùa | 3 |
-| `season.keep-score-percent` | % Điểm giữ khi sang mùa | 50 |
-| `boss.scale-min` / `scale-max` | Scale boss | 2 / 7 |
-| `ordeal.min-net-profit` | Lãi tối thiểu khi thắng ordeal | 200 |
-| `risk.*` | Stake / mult / duration | — |
-| `quiet-bonus.*` | Giờ Vàng Vắng | — |
-| `performance.path-buff-interval-ticks` | Chu kỳ refresh buff path | 100 |
+| `path-change-cost` | Phí đổi path | 120000 |
+| `level-gear.boss-progress.base` / `step` | Boss kills mỗi bậc | 1 / 2 |
+| `level-gear.mace-ultra-kills` | Boss → Mace Ultra | 12 |
+| `level-gear.damage-percent-per-level` | % ST / level | 3 |
+| `level-gear.durability-percent-per-level` | % giảm hao / level | 3 |
+| `level-gear.armor-pen-start-level` | Bắt đầu xuyên giáp | 10 |
+| `level-gear.armor-skill.*` | Kháng / phản / né / thoát chết | xem trên |
+| `boss.enrage-hp-percent` | Ngưỡng bão sét | 0.20 |
+| `boss.storm-duration-seconds` | Thời gian bão | 3 |
+| `ordeal.min-net-profit` | Lãi tối thiểu Ordeal | 200 |
+| `quiet-bonus.drop-max-online` | Trần online để rơi mảnh | 12 |
 
 ---
 
-## 🆕 Changelog 1.0.13
+## ⚖️ Luật trong code
 
-### Gear Level — thuộc tính thật
+| Rule | Chi tiết |
+|------|----------|
+| Đổi path | Chỉ nút GUI «Đổi con đường» |
+| Mending | Vanilla 50% · Gear Ascend **cấm** |
+| Villager | Không sinh sản |
+| Ordeal | Cấm táo vàng, potion, sữa |
+| Nâng gear | **Chỉ** Boss kill (+ admin `/ascend up`) |
 
-- ✅ **+3% sát thương / level** cộng dồn (Attribute melee + event ranged)
-- ✅ **+3% độ bền / level** giảm hao (trần 60%)
-- ✅ Giáp: +Armor / +Toughness theo level
-- ✅ Lore hiển thị rõ `+X% sát thương` · `+X% độ bền`
-- ✅ **Gear cũ** tự migrate khi login / dùng — không mất progress
-- ✅ Config: `damage-percent-per-level` · `durability-percent-per-level`
+---
 
-### Giữ nguyên
+## 🆕 Changelog
 
-- Path / node / Thiên Mệnh / Risk / Ordeal / Boss / Bounty / Quiet Bonus
-- Skill max signature theo 9 path
-- Mace Ultra · Khiên knockback · Cung huy hiệu
+### 1.0.20 — Skill giáp phòng thủ thật
+- Thủ hộ: −% dame + phản %
+- Linh hồn: tỉ lệ né mạnh (−70% đòn)
+- Thám hiểm: tỉ lệ thoát chết (1 máu, CD)
+- Bỏ buff potion từ skill giáp
+
+### 1.0.19 — Skill giáp path + README
+### 1.0.18 — Giáp boss kills như kiếm · Protection +1/level · Armor/Toughness
+### 1.0.17 — `/ascend up [level]` admin
+### 1.0.16 — BossBar + bão sét HP≤20%
+### 1.0.15 — Nâng level chỉ bằng kết liễu Boss · NBT tiến độ
+### 1.0.14 — Cục Netherite / Kim Cương NBT (Quiet Bonus)
+### 1.0.13 — +3% ST / độ bền theo level · attribute giáp
 
 ---
 
